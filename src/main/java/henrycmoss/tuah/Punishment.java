@@ -1,11 +1,14 @@
 package henrycmoss.tuah;
 
 import org.bukkit.World;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
 public interface Punishment {
 
-    void basicPunishment(Player player, World world);
+    void basicPunishment(LivingEntity entity, World world);
 
-    //void moTuahwarmPunishment(Player player, World world, EntityType type);
+    public interface PlayerPunishment {
+        void playerPunishment(Player player, World world);
+    }
 }

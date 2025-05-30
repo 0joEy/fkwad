@@ -8,6 +8,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.IronGolem;
 import org.bukkit.entity.Player;
 import org.checkerframework.checker.units.qual.C;
 import org.joml.Vector2d;
@@ -21,15 +22,15 @@ public class PunishCommand extends AbstractCommand {
 
     public final String name = "punish";
 
-    public static final Map<String, Punishment> punishmentMap = Stream.of(new Object[][] {
-            { "lightningStrike", (Punishment) (player, world) -> world.strikeLightning(player.getLocation())},
-            { "pillagers", (Punishment) (player, world) -> {
+    public static final Map<String, Punishment.PlayerPunishment> playerPunishmentMap = Stream.of(new Object[][] {
+            { "lightningStrike", (Punishment.PlayerPunishment) (player, world) -> world.strikeLightning(player.getLocation())},
+            { "pillagers", (Punishment.PlayerPunishment) (player, world) -> {
                 player.setGameMode(GameMode.SURVIVAL);
                 for(int i = 0; i < 20; i++) {
                     world.spawnEntity(player.getLocation(), EntityType.PILLAGER);
                 }
             }},
-            { "lavaPit", (Punishment) (player, world) -> {
+            { "lavaPit", (Punishment.PlayerPunishment) (player, world) -> {
                 int y = player.getLocation().getBlockY();
                 Location loc = new Location(world, player.getLocation().getBlockX() + 0.5d, y, player.getLocation().getBlockZ() + 0.5d);
                 player.teleport(loc);
@@ -46,7 +47,7 @@ public class PunishCommand extends AbstractCommand {
                     }
                 }
             }},
-            { "rape", (Punishment) (player, world) -> {
+            { "rape", (Punishment.PlayerPunishment) (player, world) -> {
                 Location l = player.getLocation();
                 int x;
                 int z;
@@ -55,6 +56,10 @@ public class PunishCommand extends AbstractCommand {
 
                 for(Vector2d v : circle.getPoints(50)) {
                     player.sendMessage(v.x + ", " + v.y);
+                    IronGolem golem = (IronGolem) world.spawnEntity(new Location(world, v.x, player.getLocation().getY(), v.y),
+                            EntityType.IRON_GOLEM);
+                    golem.setHealth(500.0d);
+                    golem.setTarget(player);
                 }
 
                 player.sendMessage();
@@ -68,21 +73,20 @@ public class PunishCommand extends AbstractCommand {
                 }
             }}*/,
 
-            }).collect(Collectors.toMap(data -> (String) data[0], data -> (Punishment) data[1]));
+            }).collect(Collectors.toMap(data -> (String) data[0], data -> (Punishment.PlayerPunishment) data[1]));
 
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 
-        Player player = Bukkit.getPlayerExact(args[0]);
-        World world = player.getWorld();
+
 
         if(args[1].equals("random")) {
-            String[] keys = punishmentMap.keySet().toArray(new String[0]);
-            punishmentMap.get(keys[new Random().nextInt(keys.length)]).basicPunishment(player, world);
+            String[] keys = playerPunishmentMap.keySet().toArray(new String[0]);
+            playerPunishmentMap.get(keys[new Random().nextInt(keys.length)]).playerPunishment((Player) sender, ((Player) sender).getWorld());
         }
         else {
-            punishmentMap.get(args[1]).basicPunishment(player, world);
+            playerPunishmentMap.get(args[1]).playerPunishment((Player) sender, ((Player) sender).getWorld());
         }
         return true;
     }
