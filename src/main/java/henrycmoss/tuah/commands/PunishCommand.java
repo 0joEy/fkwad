@@ -9,12 +9,15 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.IronGolem;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.util.RayTraceResult;
 import org.checkerframework.checker.units.qual.C;
 import org.joml.Vector2d;
 
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -22,15 +25,17 @@ public class PunishCommand extends AbstractCommand {
 
     public final String name = "punish";
 
+    private static final String[] punishmentNames = {"lightningStrike", "pillagers", "lavaPit", "rape"};
+
     public static final Map<String, Punishment.PlayerPunishment> playerPunishmentMap = Stream.of(new Object[][] {
-            { "lightningStrike", (Punishment.PlayerPunishment) (player, world) -> world.strikeLightning(player.getLocation())},
-            { "pillagers", (Punishment.PlayerPunishment) (player, world) -> {
+            { punishmentNames[0], (Punishment.PlayerPunishment) (player, world) -> world.strikeLightning(player.getLocation())},
+            { punishmentNames[1], (Punishment.PlayerPunishment) (player, world) -> {
                 player.setGameMode(GameMode.SURVIVAL);
                 for(int i = 0; i < 20; i++) {
                     world.spawnEntity(player.getLocation(), EntityType.PILLAGER);
                 }
             }},
-            { "lavaPit", (Punishment.PlayerPunishment) (player, world) -> {
+            { punishmentNames[2], (Punishment.PlayerPunishment) (player, world) -> {
                 int y = player.getLocation().getBlockY();
                 Location loc = new Location(world, player.getLocation().getBlockX() + 0.5d, y, player.getLocation().getBlockZ() + 0.5d);
                 player.teleport(loc);
@@ -47,7 +52,7 @@ public class PunishCommand extends AbstractCommand {
                     }
                 }
             }},
-            { "rape", (Punishment.PlayerPunishment) (player, world) -> {
+            { punishmentNames[3], (Punishment.PlayerPunishment) (player, world) -> {
                 Location l = player.getLocation();
                 int x;
                 int z;
@@ -75,11 +80,39 @@ public class PunishCommand extends AbstractCommand {
 
             }).collect(Collectors.toMap(data -> (String) data[0], data -> (Punishment.PlayerPunishment) data[1]));
 
+    public static final Map<String, Punishment> punishmentMap = Stream.of(new Object[][] {
+            { punishmentNames[0], (Punishment) (entity, world) -> playerPunishmentMap.get(punishmentNames[0]) },
+            { punishmentNames[1], (Punishment) (entity, world) -> {
+                for(int i = 0; i < 20; i++) {
+                    world.spawnEntity(entity.getLocation(), EntityType.PILLAGER);
+                }
+            } },
+            { punishmentNames[2], (Punishment) (entity, world) -> playerPunishmentMap.get(punishmentNames[0]) },
+            { punishmentNames[3], (Punishment) (entity, world) -> playerPunishmentMap.get(punishmentNames[0]) },
+    }).collect(Collectors.toMap((data) -> (String) data[0], data -> (Punishment) data[1]));
+
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        Player player = Bukkit.getPlayerExact(args[0]);
+        if (player != null) {
 
-
+            if(args[1].equals("random")) {
+                String[] keys = playerPunishmentMap.keySet().toArray(new String[0]);
+                playerPunishmentMap.get(keys[new Random().nextInt(keys.length)]).playerPunishment(player, player.getWorld());
+            }
+            else {
+                playerPunishmentMap.get(args[1]).playerPunishment(player, player.getWorld());
+            }
+        }
+        else if(args[0].equalsIgnoreCase("selected")) {
+            Cast
+            if(args[1].equalsIgnoreCase("random")) {
+                String[] keys = punishmentMap.keySet().toArray(new String[0]);
+                punishmentMap.get(keys[new Random().nextInt(keys.length)]).basicPunishment(entity, entity.getWorld());
+            }
+            else punishmentMap.get(args[1]).basicPunishment(entity, entity.getWorld());
+        }
 
         if(args[1].equals("random")) {
             String[] keys = playerPunishmentMap.keySet().toArray(new String[0]);
