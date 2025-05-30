@@ -1,0 +1,12 @@
+name: HawkTuah
+version: 1.0
+main: henrycmoss.tuah.Tuah
+api-version: 1.21.4
+commands:
+  die:
+    description: kills u
+    usage: /die
+
+  punish:
+    description: rape ur enemies
+    usage: /punish
